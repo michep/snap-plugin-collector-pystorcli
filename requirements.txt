@@ -1,0 +1,2 @@
+snap-plugin-lib-py
+
