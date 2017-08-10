@@ -1,5 +1,4 @@
 import socket
-import re
 import time
 import json
 import subprocess as sp
@@ -9,6 +8,7 @@ import snap_plugin.v1 as snap
 class StorcliCollector(snap.Collector):
 
     def __init__(self, *args):
+        self.hostname = socket.gethostname().lower()
         super(StorcliCollector, self).__init__(*args)
 
     def update_catalog(self, config):
@@ -16,7 +16,6 @@ class StorcliCollector(snap.Collector):
         metric = snap.Metric(version=1)
         metric.namespace.add_static_element("mfms")                              # /0
         metric.namespace.add_static_element("storcli")                           # /1
-        # dynamic elements which are captured from the smartmontool
         metric.namespace.add_dynamic_element("path", "device path")              # /2
         metric.namespace.add_static_element("health")                            # /3
         metrics.append(metric)
@@ -26,23 +25,37 @@ class StorcliCollector(snap.Collector):
 
     def collect(self, metrics):
         metrics_return = []
+        ts_now = time.time()
         prog = metrics[0].config['storcli_path']
         sudo = metrics[0].config['sudo']
+        print(metrics[0].config)
         disks = self.get_storcli_output(prog, sudo)
         for disk in disks:
             metric = snap.Metric(namespace=[i for i in metrics[0].namespace])
             metric.namespace[2].value = disk['Path']
             metric.data = 0 if (disk['State'] == 'JBOD' or disk['State'] == 'Onln') else 1
-            metric.timestamp = time.time()
+            metric.timestamp = ts_now
             metric.tags['serialnum'] = disk['SN']
             metrics_return.append(metric)
 
         return metrics_return
 
     def get_config_policy(self):
-        return snap.ConfigPolicy()
+        return snap.ConfigPolicy([
+            ("mfms", "storcli"),
+            [
+                (
+                    "storcli_path",
+                    snap.StringRule(required=True, default="storcli")
+                ),
+                (
+                    "sudo",
+                    snap.BoolRule(required=True)
+                )
+            ]
+        ])
 
-    def get_storcli_output(selfself, prog = 'storcli', sudo=False):
+    def get_storcli_output(selfself, prog, sudo):
         procs = []
         disks = []
         if sudo:

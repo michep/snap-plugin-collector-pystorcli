@@ -1,0 +1,20 @@
+---
+version: 1
+schedule:
+  type: "simple"
+  interval: "20s"
+max-failures: -1
+deadline: "10s"
+workflow:
+  collect:
+    metrics:
+      /mfms/storcli/*/health: {}
+    config:
+      /mfms/storcli:
+        sudo: true
+        storcli_path: /opt/MegaRAID/storcli/storcli64
+#    publish:
+#    - plugin_name: "opentsdb"
+#      config:
+#        host: bux.mfms
+#        port: 4224
