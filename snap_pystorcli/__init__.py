@@ -28,7 +28,6 @@ class StorcliCollector(snap.Collector):
         ts_now = time.time()
         prog = metrics[0].config['storcli_path']
         sudo = metrics[0].config['sudo']
-        print(metrics[0].config)
         disks = self.get_storcli_output(prog, sudo)
         for disk in disks:
             metric = snap.Metric(namespace=[i for i in metrics[0].namespace])
