@@ -1,2 +1,2 @@
 snap-plugin-lib-py
-
+subprocess32

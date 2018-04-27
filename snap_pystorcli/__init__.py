@@ -1,9 +1,14 @@
 import socket
 import time
 import json
-import subprocess as sp
+import os
+import sys
 import snap_plugin.v1 as snap
 
+if os.name == 'posix' and sys.version_info[0] < 3:
+    import subprocess32 as sp
+else:
+    import subprocess as sp
 
 class StorcliCollector(snap.Collector):
 
@@ -65,7 +70,16 @@ class StorcliCollector(snap.Collector):
             procs.append(sp.Popen([prog, '/call', '/eall', '/sall', 'show', 'all', 'J'], stdout=sp.PIPE))
 
         for proc in procs:
-            obj = json.loads(proc.stdout.read())
+            try:
+                stdout, stderr = proc.communicate(timeout=120)
+            except sp.TimeoutExpired:
+                proc.kill()
+                continue
+
+            if stdout == "":
+                continue
+
+            obj = json.loads(stdout)
             for cont in obj['Controllers']:
                 if 'Response Data' in cont:
                     dnames =  [name.lstrip('Drive ') for name in cont['Response Data'] if name.find('Detailed Information') < 1]
