@@ -37,7 +37,7 @@ class StorcliCollector(snap.Collector):
         for disk in disks:
             metric = snap.Metric(namespace=[i for i in metrics[0].namespace])
             metric.namespace[2].value = disk['Path']
-            metric.data = 0 if (disk['State'] == 'JBOD' or disk['State'] == 'Onln') else 1
+            metric.data = 0 if disk['State'] in ('JBOD', 'Onln', 'GHS') else 1
             metric.timestamp = ts_now
             metric.tags['serialnum'] = disk['SN']
             metrics_return.append(metric)
@@ -82,7 +82,7 @@ class StorcliCollector(snap.Collector):
             obj = json.loads(stdout)
             for cont in obj['Controllers']:
                 if 'Response Data' in cont:
-                    dnames =  [name.lstrip('Drive ') for name in cont['Response Data'] if name.find('Detailed Information') < 1]
+                    dnames =  [name.lstrip('Drive ') for name in cont['Response Data'] if name.find('Information') < 0]
                     for dname in dnames:
                         info = cont['Response Data']['Drive ' + dname][0]
                         detinfo = cont['Response Data']['Drive ' + dname + ' - Detailed Information']
